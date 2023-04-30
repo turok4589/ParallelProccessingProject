@@ -8,7 +8,7 @@ import parabond.cluster._
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object ParaWorker {
+object ParaWorker extends App {
      val LOG = Logger.getLogger(getClass)
 
      LOG.info("started")
@@ -53,11 +53,15 @@ class ParaWorker(port: Int) extends Worker(port) {
           task.payload match {
             //Worker receives a partition from the dispatcher and then returns results back to dispatcher
             case p: Partition =>
+              println("Begin: " + p.begin)
+              println("Num" + p.n)
               // BasicNode is default, use -Dnode=className to modify
               val node = Node.getInstance(p)
 
               assert(node != null, "failed to construct node")
-
+              println("Analyzing....")
+              println("Begin: " + p.begin)
+              println("Num" + p.n)
               val analysis = node.analyze()
 
               /**
@@ -65,10 +69,14 @@ class ParaWorker(port: Int) extends Worker(port) {
                * These jobs contain a result which contain t0, and t1
                * We need to sum these to get the partial T1's of the individual workers.
                */
+               println("Finished analyzing time to sum t1")
                val partialT1 = analysis.results.foldLeft(0L){(sum, jobResult) =>
                   sum + (jobResult.result.t1 - jobResult.result.t0)
                }
-             sender ! PortfolioResult(partialT1)
+              println("Begin: " + p.begin)
+              println("Num" + p.n)
+              println("Partial T1: " + partialT1)
+              sender.send(PortfolioResult(partialT1))
           }
 
         // Send a simple reply to test the connectivity.

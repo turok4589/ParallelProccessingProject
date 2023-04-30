@@ -24,14 +24,17 @@ class ParaDispatcher(sockets: List[String]) extends Dispatcher(sockets) {
 
   def act: Unit = {
     val ladder = List(
-      1000,
-      2000,
-      4000,
-      8000,
-      16000,
-      32000,
-      64000,
-      100000)
+      100,
+      200,
+      300)
+      //1000,
+      //2000,
+      //4000,
+      //8000,
+      //16000,
+      //32000,
+      //64000,
+      //100000)
     println("ParaBond Analysis")
     println("By Miguel Vasquez")
     println("May 7th, 2023")
@@ -44,20 +47,22 @@ class ParaDispatcher(sockets: List[String]) extends Dispatcher(sockets) {
 
         val t0 = System.nanoTime()
         //Dispatch two workers
-        workers(0) ! Partition(numPortfolios/2, 0)
+        workers(0) ! Partition(numPortfolios/2, 1)
         workers(1) ! Partition(numPortfolios/2, numPortfolios/2)
 
         //Expecting two results from the workers.
         val resultList = waitForWorker
+        println("IM FREEEE")
         val t1 = System.nanoTime()
 
         val TN = (t1 - t0)/1000000000.0
-        val sumT1 = sumPartialT1s(resultList)
+        val sumT1 = sumPartialT1s(resultList)/1000000000.0
 
         val miss = check(portfIds)
         //print out results
         ask(numPortfolios, miss.length, sumT1, TN, n)
      }
+     println("Dispatcher Finished")
   }
 
 
@@ -84,14 +89,17 @@ class ParaDispatcher(sockets: List[String]) extends Dispatcher(sockets) {
    * @return A list of results
    */
   def waitForWorker: IndexedSeq[PortfolioResult] = {
+    println(workers.length)
     val workerResults = for (x <- 0 until workers.length) yield {
       receive match {
         case task: Task if (task.kind == Task.REPLY && task.payload.isInstanceOf[PortfolioResult]) =>
+          println("Got Result")
           task.payload.asInstanceOf[PortfolioResult]
         case x =>
           PortfolioResult(0)
       }
     }
+    println("Done")
     workerResults
   }
 
