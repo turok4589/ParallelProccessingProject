@@ -2,13 +2,13 @@ package assign3
 
 import org.apache.log4j.Logger
 import parascale.actor.last.{Task, Worker}
-import parascale.future.perfect.{_sumOfFactorsInRange, ask, candidates}
 import parascale.util._
 import parabond.cluster._
-import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
+import parabond.util.{JavaMongoHelper}
 
 object ParaWorker extends App {
+
+     JavaMongoHelper.hush()
      val LOG = Logger.getLogger(getClass)
 
      LOG.info("started")
@@ -42,6 +42,7 @@ class ParaWorker(port: Int) extends Worker(port) {
    * Handles actor startup after construction.
    */
   override def act: Unit = {
+
     val name = getClass.getSimpleName
     LOG.info("started " + name + " (id=" + id + ")")
 

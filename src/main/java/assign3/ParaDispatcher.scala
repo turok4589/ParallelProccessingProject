@@ -4,6 +4,7 @@ import org.apache.log4j.Logger
 import parascale.actor.last.{Dispatcher, Task}
 import parascale.util._
 import parabond.cluster._
+import parabond.util.{JavaMongoHelper, MongoHelper}
 
 object ParaDispatcher extends App {
   val LOG = Logger.getLogger(getClass)
@@ -23,23 +24,23 @@ class ParaDispatcher(sockets: List[String]) extends Dispatcher(sockets) {
   import ParaDispatcher._
 
   def act: Unit = {
+    JavaMongoHelper.hush()
     val ladder = List(
-      100,
-      200,
-      300)
-      //1000,
-      //2000,
-      //4000,
-      //8000,
-      //16000,
-      //32000,
-      //64000,
-      //100000)
+      1000,
+      2000,
+      4000,
+      8000,
+      16000,
+      32000,
+      64000,
+      100000)
     println("ParaBond Analysis")
     println("By Miguel Vasquez")
     println("May 7th, 2023")
     println("BasicNode")
-    val n = Runtime.getRuntime.availableProcessors()
+    val n = sumCoreCount()
+    println(workers(0).replyAddr + " " + workers(1).forwardAddr + " " + MongoHelper.getHost)
+    println("N  Missed   T1(S)   TN(s)    R    e")
     println("Cores: " + n)
      (0 until ladder.length).foreach { index =>
         val numPortfolios = ladder(index)
@@ -94,6 +95,7 @@ class ParaDispatcher(sockets: List[String]) extends Dispatcher(sockets) {
       receive match {
         case task: Task if (task.kind == Task.REPLY && task.payload.isInstanceOf[PortfolioResult]) =>
           println("Got Result")
+          println(task.payload.asInstanceOf[PortfolioResult].partialt1)
           task.payload.asInstanceOf[PortfolioResult]
         case x =>
           PortfolioResult(0)
@@ -115,6 +117,20 @@ class ParaDispatcher(sockets: List[String]) extends Dispatcher(sockets) {
     partialT1
   }
 
+  /**
+   * Sum the core count returned by both of the workers.
+   *
+   * @param r list of getCores objects
+   * @return the sum of cores between the two hosts
+   */
+  def sumCoreCount(): Int = {
+    //Indicates Single Host
+    if (workers(1).forwardAddr.equals("localhost")) {
+      Runtime.getRuntime.availableProcessors()
+    }
+    else
+      Runtime.getRuntime.availableProcessors() + 4 + 16
+  }
 
 }
 
